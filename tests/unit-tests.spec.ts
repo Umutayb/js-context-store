@@ -11,19 +11,30 @@ describe('ContextStore', () => {
   describe('Basic Operations', () => {
     it('should store and retrieve basic values', () => {
       context.put('username', 'testuser');
+      // TypeScript infers 'any' here, but we can also explicitly cast if we want: context.get<string>('username')
       expect(context.get('username')).toBe('testuser');
     });
 
     it('should ignore null or undefined keys and values on put', () => {
       context.put('validKey', null);
+      context.put('validKey2', undefined);
       context.put(null as any, 'validValue');
+      context.put(undefined as any, 'validValue');
       
       expect(context.has('validKey')).toBe(false);
+      expect(context.has('validKey2')).toBe(false);
       expect(context.has('null')).toBe(false);
+      expect(context.has('undefined')).toBe(false);
     });
 
     it('should return default value if key is not found', () => {
+      // TypeScript infers 'defaultValue' is a string automatically
       expect(context.get('missingKey', 'defaultValue')).toBe('defaultValue');
+    });
+
+    it('should return undefined at runtime if key is missing and no default is provided', () => {
+      // Even though the return type is T, at runtime it will be undefined if no fallback is given.
+      expect(context.get('completelyMissing')).toBeUndefined();
     });
 
     it('should correctly report if it has a key', () => {
@@ -48,8 +59,9 @@ describe('ContextStore', () => {
       expect(context.getBoolean('randomStr')).toBe(false);
     });
 
-    it('should return default boolean if key is missing or undefined', () => {
+    it('should return default boolean if key is missing', () => {
       expect(context.getBoolean('missingBool', true)).toBe(true);
+      expect(context.getBoolean('anotherMissingBool')).toBe(false); // default is false
     });
 
     it('should correctly parse numeric values', () => {
@@ -64,6 +76,7 @@ describe('ContextStore', () => {
 
     it('should return default number if key is missing', () => {
       expect(context.getNumber('missingNum', 99)).toBe(99);
+      expect(context.getNumber('anotherMissingNum')).toBe(0); // default is 0
     });
   });
 
