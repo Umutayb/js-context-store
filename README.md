@@ -1,4 +1,4 @@
-# Context Store
+# @civitas-cerebrum/context-store
 
 A lightweight, strongly-typed, and framework-agnostic utility for managing test state and contextual data across test steps.
 
@@ -7,7 +7,7 @@ When writing end-to-end (E2E) or integration tests, you often need to pass data 
 ## Installation
 
 ```bash
-npm install context-store
+npm i @civitas-cerebrum/context-store
 ```
 
 ## Why use context-store?
@@ -20,7 +20,7 @@ npm install context-store
 ## Quick Start
 
 ```typescript
-import { ContextStore } from 'context-store';
+import { ContextStore } from '@civitas-cerebrum/context-store';
 
 // Instantiate a new store for your test
 const context = new ContextStore();
@@ -62,7 +62,7 @@ Instead of instantiating `ContextStore` manually inside every single test, you c
 
 ```typescript
 import { test as base } from '@playwright/test';
-import { ContextStore } from 'context-store';
+import { ContextStore } from '@civitas-cerebrum/context-store';
 
 type MyFixtures = {
   context: ContextStore;
@@ -75,7 +75,6 @@ export const test = base.extend<MyFixtures>({
     await use(store);
   },
 });
-
 ```
 
 **2. Use it in your tests (`example.spec.ts`):**
@@ -93,9 +92,10 @@ test('My test using the context store', async ({ page, context }) => {
     // Proceed with assertions...
   });
 });
-
 ```
 
 ## License
 
 MIT
+
+```
