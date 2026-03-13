@@ -1,5 +1,5 @@
 {
-  "name": "context-store",
+  "name": "@civitas-cerebrum/context-store",
   "version": "0.0.1",
   "description": "A lightweight, strongly-typed, and framework-agnostic utility for managing test state and contextual data across test steps.",
   "main": "dist/index.js",
