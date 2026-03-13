@@ -1,126 +1,105 @@
-# Playwright Element Repository
+# Context Store
 
-[![NPM Version](https://img.shields.io/npm/v/pw-element-repository?color=rgb(88%2C%20171%2C%2070))](https://www.npmjs.com/package/pw-element-repository)
+A lightweight, strongly-typed, and framework-agnostic utility for managing test state and contextual data across test steps.
 
-A lightweight, robust package that decouples your Playwright UI selectors from your test code. By externalizing locators into a central JSON repository, you make your test automation framework cleaner, easier to maintain, and accessible to non-developers.
+When writing end-to-end (E2E) or integration tests, you often need to pass data generated in one step (like a dynamic ID, an extracted date, or an email address) to subsequent steps. `context-store` replaces messy plain JavaScript objects with a robust map-based API, providing safe type-casting, default values, and clean iteration.
 
-## 📦 Installation
-
-Install the package via your preferred package manager:
+## Installation
 
 ```bash
-npm i pw-element-repository
+npm install context-store
 ```
 
-**Peer Dependencies:**
-This package requires `@playwright/test` or `playwright` to be installed in your project.
+## Why use context-store?
 
-## 🚀 What is it good for?
+* **Type Safety:** Built-in TypeScript support ensures you know exactly what data you are retrieving.
+* **Safe Parsing:** Methods like `getBoolean` and `getNumber` gracefully handle missing or malformed data with reliable fallbacks.
+* **Framework Agnostic:** Works perfectly with Playwright, Cypress, WebdriverIO, Jest, Mocha, or Cucumber.
+* **Clean Iteration:** Easily loop through stored key-value pairs for bulk assertions.
 
-* **Zero Hardcoded Selectors:** Keep your Page Objects and Step Definitions completely free of complex DOM queries.
-* **Dynamic Parsing:** Automatically converts your JSON configuration into native Playwright CSS, XPath, ID, or Text selectors.
-* **Smart Locators:** Built-in methods for handling arrays, randomized element selection (great for catalog/PLP testing), and text-filtering.
-* **Soft Waiting:** Seamlessly waits for elements to attach and become visible before returning a locator to prevent flake.
-
-## 🏗️ Configuration
-
-Create a JSON file in your project to hold your selectors. The file must adhere to the standard schema:
-
-**`locators.json`**
-
-```json
-{
-  "pages": [
-    {
-      "name": "HomePage",
-      "elements": [
-        {
-          "elementName": "search-input",
-          "selector": { "css": "input[name='search']" }
-        },
-        {
-          "elementName": "submit-button",
-          "selector": { "id": "btn-submit" }
-        }
-      ]
-    },
-    {
-      "name": "ProductList",
-      "elements": [
-        {
-          "elementName": "product-cards",
-          "selector": { "xpath": "//article[@class='product']" }
-        }
-      ]
-    }
-  ]
-}
-
-```
-
-## 💻 Usage
-
-You can initialize the `ElementRepository` either by passing the **file path** to your JSON, or by passing the **parsed JSON object** directly.
-
-### Initialization
+## Quick Start
 
 ```typescript
-import { test } from '@playwright/test';
-import { ElementRepository } from 'pw-element-repository';
+import { ContextStore } from 'context-store';
 
-// Option A: Pass the path to your JSON (relative to your project root)
-const repo = new ElementRepository('tests/data/locators.json', 15000);
+// Instantiate a new store for your test
+const context = new ContextStore();
 
-// Option B: Import the JSON directly (requires resolveJsonModule in tsconfig)
-import locatorData from '../data/locators.json';
-const repo = new ElementRepository(locatorData, 15000);
+// Store data during a step
+context.put('UserEmail', 'test@example.com');
+context.put('IsSubscribed', true);
+context.put('RetryCount', '3'); // Note: Stored as a string
+
+// Retrieve data safely in later steps
+const email = context.get('UserEmail');
+const isSubscribed = context.getBoolean('IsSubscribed');
+const retries = context.getNumber('RetryCount', 0); // Safely parsed to a number!
+
+console.log(email); // 'test@example.com'
 
 ```
 
-### Retrieving Elements
+## API Reference
 
-The repository exposes clean, asynchronous methods that return Playwright `Locator` objects, ready for interaction.
+| Method | Description | Example |
+| --- | --- | --- |
+| **`put(key, value)`** | Associates a value with a specific key. Ignores null/undefined inputs. | `context.put('id', 123);` |
+| **`get<T>(key, default?)`** | Retrieves a value, optionally falling back to a default if the key is missing. | `context.get<string>('name', 'N/A');` |
+| **`getBoolean(key, default?)`** | Returns `true` if the stored value is a boolean true or the string `"true"`. | `context.getBoolean('isActive', false);` |
+| **`getNumber(key, default?)`** | Parses and returns the value as a number. Falls back to default if parsing fails. | `context.getNumber('price', 0);` |
+| **`has(key)`** | Returns `true` if the store contains the specified key. | `context.has('token');` |
+| **`merge(...sources)`** | Merges properties from records or other Maps into the current store. | `context.merge({ a: 1, b: 2 });` |
+| **`entries()`** | Returns an array of `[key, value]` pairs, perfect for loops and assertions. | `for (const [k, v] of context.entries())` |
+| **`items()`** | Returns a `Set` of all keys currently in the store. | `context.items();` |
+| **`remove(key)`** | Deletes a specific entry from the store. | `context.remove('temporaryId');` |
+| **`clear()`** | Wipes all data from the store. | `context.clear();` |
+
+## Advanced: Playwright Fixture Integration
+
+Instead of instantiating `ContextStore` manually inside every single test, you can inject it automatically using Playwright Fixtures.
+
+**1. Define the fixture (`fixtures.ts`):**
 
 ```typescript
-test('Search and select random product', async ({ page }) => {
-  await page.goto('/');
+import { test as base } from '@playwright/test';
+import { ContextStore } from 'context-store';
 
-  // 1. Get a standard element
-  const searchInput = await repo.get(page, 'HomePage', 'search-input');
-  await searchInput.fill('Trousers');
+type MyFixtures = {
+  context: ContextStore;
+};
 
-  const submitBtn = await repo.get(page, 'HomePage', 'submit-button');
-  await submitBtn.click();
-
-  // 2. Select a random element from a list
-  const randomProduct = await repo.getRandom(page, 'ProductList', 'product-cards');
-  await randomProduct?.click();
-  
-  // 3. Find a specific element by text within a list
-  const specificProduct = await repo.getByText(page, 'ProductList', 'product-cards', 'Blue Chinos');
-  await specificProduct?.click();
+export const test = base.extend<MyFixtures>({
+  context: async ({}, use) => {
+    // Creates a fresh store for every test run
+    const store = new ContextStore();
+    await use(store);
+  },
 });
 
 ```
 
-## 🛠️ API Reference
+**2. Use it in your tests (`example.spec.ts`):**
 
-### `get(page, pageName, elementName)`
+```typescript
+import { test } from './fixtures';
 
-Returns a single Playwright Locator. Waits for the selector to attach to the DOM based on your configured timeout.
+test('My test using the context store', async ({ page, context }) => {
+  await test.step('Generate Data', async () => {
+    context.put('orderId', 'ORD-999');
+  });
 
-### `getAll(page, pageName, elementName)`
+  await test.step('Verify Data', async () => {
+    const orderId = context.get('orderId');
+    // Proceed with assertions...
+  });
+});
 
-Returns an array of resolved Locator handles (`Locator[]`). Useful when you need to iterate over multiple elements.
+```
 
-### `getRandom(page, pageName, elementName, strict?)`
+## License
 
-Counts the matching elements and randomly selects one. Safely waits for the specific randomized element to become visible.
+MIT
 
-### `getByText(page, pageName, elementName, desiredText, strict?)`
+---
 
-Returns the first Locator matching the mapped selector that also contains the `desiredText`.
-
-### `getSelector(pageName, elementName)`
-
-Returns the raw string selector mapped to the given element (e.g., "css=input[name='search']" or "xpath=//div"). This is a synchronous method primarily useful for debugging, custom logging, or passing raw selector strings directly into native Playwright APIs that require strings instead of Locator objects.
+Would you like me to draft the `package.json` configurations or write the unit tests for this package using a framework like Vitest or Jest so you are ready to publish?
