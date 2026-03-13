@@ -1,32 +1,34 @@
 {
-  "name": "pw-element-repository",
-  "version": "0.0.3",
-  "description": "A lightweight, robust package that decouples your Playwright UI selectors from your test code. By externalizing locators into a central JSON repository, you make your test automation framework cleaner, easier to maintain, and accessible to non-developers.",
+  "name": "context-store",
+  "version": "0.0.1",
+  "description": "A lightweight, strongly-typed, and framework-agnostic utility for managing test state and contextual data across test steps.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
-    "test": "npx playwright test",
+    "test": "vitest run",
     "prepublishOnly": "npm run build"
   },
   "files": [
     "dist"
   ],
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^1.6.1"
   },
   "keywords": [
-    "playwright",
+    "testing",
+    "e2e",
+    "context",
+    "state-management",
     "automation",
-    "locators",
-    "selectors",
-    "clean-code",
-    "page-object-model",
-    "test-automation",
-    "json-repository"
+    "playwright",
+    "cypress",
+    "webdriverio",
+    "bdd",
+    "scenario-state"
   ],
   "publishConfig": {
     "access": "public",
@@ -34,7 +36,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:Umutayb/pw-element-repository.git"
+    "url": "git@github.com:Umutayb/js-context-store.git"
   },
   "author": "Umut Ay Bora",
   "license": "MIT"
