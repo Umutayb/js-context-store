@@ -99,7 +99,3 @@ test('My test using the context store', async ({ page, context }) => {
 ## License
 
 MIT
-
----
-
-Would you like me to draft the `package.json` configurations or write the unit tests for this package using a framework like Vitest or Jest so you are ready to publish?
